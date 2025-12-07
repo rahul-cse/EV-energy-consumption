@@ -6,31 +6,15 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 import numpy as np
+import tensorflow as tf
 from joblib import load
 from fastapi.middleware.cors import CORSMiddleware
 
-try:
-    import tflite_runtime.interpreter as tflite
-    TFLITE = True
-except ImportError:
-    import tensorflow as tf
-    TFLITE = False
 
-if TFLITE:
-    # Vercel deployment
-    interpreter = tflite.Interpreter(model_path="ev_energy_model.tflite")
-    interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-else:
-    # Local testing
-    model = tf.keras.models.load_model("ev_energy_model.keras")
-
-#trained_model = tf.keras.models.load_model("ev_energy_model.keras")
+trained_model = tf.keras.models.load_model("ev_energy_model.keras")
 
 
-
-app = FastAPI(title="EV Energy Consumption API")
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,22 +70,13 @@ def predict_energy(data: EVFeatures):
                    data.Distance_Travelled_km,
                   ]
     
-    x = np.array([numeric_features + dm + rt + tc + wc], dtype=np.float32)
+    x = np.array([numeric_features + dm + rt + tc + wc], dtype=float)
     scaler_X = load("scaler_X.save")
-    x_scaled = scaler_X.transform(x).astype(np.float32)
-    
+    x_scaled = scaler_X.transform(x)
     
     # Prediction
-    if TFLITE:
-        # Vercel deployment
-        interpreter.set_tensor(input_details[0]['index'], x_scaled)
-        interpreter.invoke()
-        pred = interpreter.get_tensor(output_details[0]['index'])[0][0]
-    else:
-        # Local testing
-        pred = model.predict(x_scaled)[0][0]
-        
-    return {"Energy_Consumption_kWh": float(pred)}    
+    pred = trained_model.predict(x_scaled)
+    return {"Energy_Consumption_kWh": float(pred[0][0])}    
 
 def one_hot_encode(value, num_categories):
     arr = [0] * num_categories

@@ -1,6 +1,6 @@
 fastapi
 uvicorn
 numpy
-tflite-runtime
+tensorflow-cpu
 pydantic
 joblib
