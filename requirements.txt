@@ -3,4 +3,5 @@ uvicorn
 numpy
 tensorflow-cpu
 pydantic
+scikit-learn
 joblib
