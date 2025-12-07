@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 trained_model = tf.keras.models.load_model("ev_energy_model.keras")
 
 
-app = FastAPI()
+app = FastAPI("title="EV Energy Consumption API"")
 
 app.add_middleware(
     CORSMiddleware,
